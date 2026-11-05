@@ -59,37 +59,20 @@ def get_all_layers(model):
             yield from get_all_layers(layer)
 
 
-all_layers = list(get_all_layers(base_model))
-
-# Сначала ищем Conv2D и DepthwiseConv2D
-conv_layers = [
-    layer for layer in all_layers
-    if isinstance(
-        layer,
-        (keras.layers.Conv2D, keras.layers.DepthwiseConv2D)
-    )
-]
-
-if conv_layers:
-    last_conv_layer = conv_layers[-1]
-else:
-    # Если свёрточные слои не найдены,
-    # ищем последний слой с пространственной картой признаков
-    spatial_layers = []
-
-    for layer in all_layers:
-        try:
-            if len(layer.output.shape) == 4:
-                spatial_layers.append(layer)
-        except (AttributeError, ValueError):
-            pass
-
-    if not spatial_layers:
-        raise ValueError("Could not find a suitable Grad-CAM layer.")
-
-    last_conv_layer = spatial_layers[-1]
+# Use the final spatial feature layer of EfficientNetV2B0
+last_conv_layer = base_model.get_layer("top_activation")
 
 print("Grad-CAM layer:", last_conv_layer.name)
+print("Layer output shape:", last_conv_layer.output.shape)
+
+# Build Grad-CAM model
+grad_model = keras.Model(
+    inputs=base_model.inputs,
+    outputs=[
+        last_conv_layer.output,
+        base_model.output
+    ]
+)
 
 # Use the final spatial feature layer of EfficientNetV2B0
 last_conv_layer = base_model.get_layer("top_activation")
