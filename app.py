@@ -80,27 +80,9 @@ last_conv_layer = base_model.get_layer("top_activation")
 print("Grad-CAM layer:", last_conv_layer.name)
 print("Layer output shape:", last_conv_layer.output.shape)
 
-# Build Grad-CAM model
-grad_model = keras.Model(
-    inputs=base_model.inputs,
-    outputs=[
-        last_conv_layer.output,
-        base_model.output
-    ]
-)
-
-
 # --------------------------------
 # 4. Prepare Grad-CAM model
 # --------------------------------
-
-grad_model = keras.Model(
-    inputs=base_model.input,
-    outputs=[
-        last_conv_layer.output,
-        base_model.output
-    ]
-)
 
 pooling_layer = model.get_layer(
     "global_average_pooling"
