@@ -44,32 +44,21 @@ model = load_trained_model()
 # 3. Find EfficientNet backbone
 # --------------------------------
 
-# The backbone is nested inside the trained model
-base_model = next(
-    layer for layer in model.layers
-    if isinstance(layer, keras.Model)
-)
+base_model = model.get_layer("efficientnetv2-b0")
 
-# Find the last convolutional layer
-def get_all_layers(model):
-    for layer in model.layers:
-        yield layer
+print("Backbone:", base_model.name)
 
-        if isinstance(layer, keras.Model):
-            yield from get_all_layers(layer)
+# Check the actual layer names
+for layer in base_model.layers[-10:]:
+    print(layer.name, layer.output.shape)
 
-for layer in base_model.layers:
-    try:
-        print(layer.name, layer.output.shape)
-    except Exception:
-        print(layer.name, "No output shape")
-# Use the final spatial feature layer of EfficientNetV2B0
+
+# --------------------------------
+# 4. Prepare Grad-CAM model
+# --------------------------------
+
 last_conv_layer = base_model.get_layer("top_activation")
 
-print("Grad-CAM layer:", last_conv_layer.name)
-print("Layer output shape:", last_conv_layer.output.shape)
-
-# Build Grad-CAM model
 grad_model = keras.Model(
     inputs=base_model.inputs,
     outputs=[
@@ -78,38 +67,11 @@ grad_model = keras.Model(
     ]
 )
 
-# Use the final spatial feature layer of EfficientNetV2B0
-conv_layers = [
-    layer for layer in base_model.layers
-    if isinstance(layer, layers.Conv2D)
-]
-
-for layer in conv_layers[-5:]:
-    print(layer.name, layer.output.shape)
-
-last_conv_layer = conv_layers[-1]
-
-print("Selected Grad-CAM layer:", last_conv_layer.name)
+pooling_layer = model.get_layer("global_average_pooling")
+dropout_layer = model.get_layer("efficient_dropout")
+prediction_layer = model.get_layer("efficient_prediction")
 
 print("Grad-CAM layer:", last_conv_layer.name)
-print("Layer output shape:", last_conv_layer.output.shape)
-
-# --------------------------------
-# 4. Prepare Grad-CAM model
-# --------------------------------
-
-pooling_layer = model.get_layer(
-    "global_average_pooling"
-)
-
-dropout_layer = model.get_layer(
-    "efficient_dropout"
-)
-
-prediction_layer = model.get_layer(
-    "efficient_prediction"
-)
-
 
 # --------------------------------
 # 5. Grad-CAM function
