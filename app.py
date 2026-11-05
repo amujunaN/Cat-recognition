@@ -58,7 +58,11 @@ def get_all_layers(model):
         if isinstance(layer, keras.Model):
             yield from get_all_layers(layer)
 
-
+for layer in base_model.layers:
+    try:
+        print(layer.name, layer.output.shape)
+    except Exception:
+        print(layer.name, "No output shape")
 # Use the final spatial feature layer of EfficientNetV2B0
 last_conv_layer = base_model.get_layer("top_activation")
 
