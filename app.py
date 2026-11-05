@@ -79,10 +79,17 @@ grad_model = keras.Model(
 )
 
 # Use the final spatial feature layer of EfficientNetV2B0
-print("\nBACKBONE LAYERS:")
+conv_layers = [
+    layer for layer in base_model.layers
+    if isinstance(layer, layers.Conv2D)
+]
 
-for layer in base_model.layers:
+for layer in conv_layers[-5:]:
     print(layer.name, layer.output.shape)
+
+last_conv_layer = conv_layers[-1]
+
+print("Selected Grad-CAM layer:", last_conv_layer.name)
 
 print("Grad-CAM layer:", last_conv_layer.name)
 print("Layer output shape:", last_conv_layer.output.shape)
