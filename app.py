@@ -51,12 +51,50 @@ base_model = next(
 )
 
 # Find the last convolutional layer
-last_conv_layer = None
+def get_all_layers(model):
+    for layer in model.layers:
+        yield layer
 
-for layer in reversed(base_model.layers):
-    if isinstance(layer, layers.Conv2D):
-        last_conv_layer = layer
-        break
+        if isinstance(layer, keras.Model):
+            yield from get_all_layers(layer)
+
+
+all_layers = list(get_all_layers(base_model))
+
+# Сначала ищем Conv2D и DepthwiseConv2D
+conv_layers = [
+    layer for layer in all_layers
+    if isinstance(
+        layer,
+        (keras.layers.Conv2D, keras.layers.DepthwiseConv2D)
+    )
+]
+
+if conv_layers:
+    last_conv_layer = conv_layers[-1]
+else:
+    # Если свёрточные слои не найдены,
+    # ищем последний слой с пространственной картой признаков
+    spatial_layers = []
+
+    for layer in all_layers:
+        try:
+            if len(layer.output.shape) == 4:
+                spatial_layers.append(layer)
+        except (AttributeError, ValueError):
+            pass
+
+    if not spatial_layers:
+        raise ValueError("Could not find a suitable Grad-CAM layer.")
+
+    last_conv_layer = spatial_layers[-1]
+
+print("Grad-CAM layer:", last_conv_layer.name)
+
+grad_model = keras.Model(
+    inputs=base_model.input,
+    outputs=[last_conv_layer.output, base_model.output]
+)
 
 if last_conv_layer is None:
     st.error("Could not find the last convolutional layer.")
