@@ -79,7 +79,10 @@ grad_model = keras.Model(
 )
 
 # Use the final spatial feature layer of EfficientNetV2B0
-last_conv_layer = base_model.get_layer("top_activation")
+print("\nBACKBONE LAYERS:")
+
+for layer in base_model.layers:
+    print(layer.name, layer.output.shape)
 
 print("Grad-CAM layer:", last_conv_layer.name)
 print("Layer output shape:", last_conv_layer.output.shape)
