@@ -91,14 +91,20 @@ else:
 
 print("Grad-CAM layer:", last_conv_layer.name)
 
-grad_model = keras.Model(
-    inputs=base_model.input,
-    outputs=[last_conv_layer.output, base_model.output]
-)
+# Use the final spatial feature layer of EfficientNetV2B0
+last_conv_layer = base_model.get_layer("top_activation")
 
-if last_conv_layer is None:
-    st.error("Could not find the last convolutional layer.")
-    st.stop()
+print("Grad-CAM layer:", last_conv_layer.name)
+print("Layer output shape:", last_conv_layer.output.shape)
+
+# Build Grad-CAM model
+grad_model = keras.Model(
+    inputs=base_model.inputs,
+    outputs=[
+        last_conv_layer.output,
+        base_model.output
+    ]
+)
 
 
 # --------------------------------
